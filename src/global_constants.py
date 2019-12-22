@@ -2,42 +2,7 @@ from collections import OrderedDict
 
 # wagon ids are generic and are composed to specific vehicle ids elsewhere
 # order is significant
-buy_menu_sort_order_wagons = ['alignment_car',
-                              'hst_passenger_car',
-                              'passenger_car',
-                              'luxury_passenger_car',
-                              'mail_car',
-                              'express_car',
-                              'express_intermodal_car',
-                              'intermodal_car',
-                              'open_car',
-                              'box_car',
-                              'curtain_side_box_car',
-                              'sliding_wall_car',
-                              'plate_car',
-                              'flat_car',
-                              'tarpaulin_car',
-                              'coil_car',
-                              'stake_car',
-                              'hopper_car',
-                              'coal_hopper_car',
-                              'dump_car',
-                              'dump_car_high_side',
-                              'tank_car',
-                              'chemicals_tank_car',
-                              'cryo_tank_car',
-                              'covered_hopper_car',
-                              'grain_hopper_car',
-                              'silo_car',
-                              'livestock_car',
-                              'edibles_tank_car',
-                              'reefer_car',
-                              'fruit_veg_car',
-                              #'well_car',
-                              'vehicle_transporter_car',
-                              'torpedo_car',
-                              'slag_ladle_car',
-                              'caboose_car']
+buy_menu_sort_order_wagons = []
 
 # capacity multipliers for user-configurable capacity parameter
 capacity_multipliers = [0.67, 1, 1.33]
