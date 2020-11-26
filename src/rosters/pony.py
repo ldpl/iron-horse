@@ -108,6 +108,7 @@ from vehicles import tin_rocket
 from vehicles import toaster
 from vehicles import triton
 from vehicles import tyburn
+from vehicles import tug
 from vehicles import ultra_shoebox
 from vehicles import vanguard
 from vehicles import vigilant
@@ -262,6 +263,7 @@ def main(disabled=False):
                                blackthorn,
                                endeavour,
                                cheddar_valley,
+                               tug,
                                toaster,
                                flindermouse,
                                peasweep,
