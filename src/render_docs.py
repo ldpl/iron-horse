@@ -173,6 +173,9 @@ class DocHelper(object):
             self.get_palette_index_for_company_colour(company_colour, offset)
         ]
 
+    def get_palette_colour_as_rgb(self, colour):
+        return palette[colour]
+
     @property
     def company_colour_names(self):
         return {
@@ -801,6 +804,7 @@ def main():
     # render standard docs from a list
     html_docs = [
         "code_reference",
+        "company_colour_indexes",
         "get_started",
         "translations",
         "tech_tree_table_blue",

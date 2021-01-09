@@ -1,0 +1,42 @@
+<tal:title define="global title 'Iron Horse - Company Colour Indexes'" />
+
+<tal:main_template define="main_template load: main_template.pt" metal:use-macro="main_template">
+<div metal:fill-slot='body'>
+    <div class="container">
+        <div class="span12">
+            <h2>Company Colour Indexes</h2>
+            <table style="margin-top:30px;">
+                <tal:company_colours repeat="colour_map global_constants.company_colour_maps">
+                    <tr>
+                        <th rowspan="3" style="vertical-align:top; border-bottom:solid 1px #ddd; padding-top:30px; padding-right:15px; text-align:right;">
+                            ${colour_map}
+                        </th>
+                        <tal:colours repeat="colour global_constants.company_colour_maps[colour_map]">
+                            <td style="padding-top:20px;">
+                                <span style="background-color:rgb${doc_helper.get_palette_colour_as_rgb(colour)};
+                                             border:solid 1px #000;
+                                             width:32px;
+                                             height:32px;
+                                             display:inline-block;
+                                             vertical-align:top;
+                                             margin-left:0px;">
+                                </span>
+                            </td>
+                        </tal:colours>
+                    </tr>
+                    <tr>
+                        <tal:colours repeat="colour global_constants.company_colour_maps[colour_map]">
+                            <td style="text-align:right;">${hex(colour)}</td>
+                        </tal:colours>
+                    </tr>
+                    <tr>
+                        <tal:colours repeat="colour global_constants.company_colour_maps[colour_map]">
+                            <td style="text-align:right; border-bottom:solid 1px #ddd; padding-bottom:10px;">${colour}</td>
+                        </tal:colours>
+                    </tr>
+                </tal:company_colours>
+            </table>
+        </div>
+    </div>
+</div>
+</tal:main_template>
