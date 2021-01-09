@@ -86,6 +86,9 @@ from vehicles import quietus
 from vehicles import relentless
 from vehicles import reliance
 from vehicles import resilient
+from vehicles import resilient_2
+from vehicles import resilient_3
+from vehicles import resilient_4
 from vehicles import revolution
 from vehicles import roarer
 from vehicles import saxon
@@ -323,6 +326,9 @@ def main(disabled=False):
             intrepid,
             vanguard,
             resilient,
+            resilient_2,
+            resilient_3,
+            resilient_4,
             evolution,  # out of normal order so that the names read 'Evolution', 'Revolution' (usually jokers come after the tech tree version not before)
             revolution,
             pegasus,
