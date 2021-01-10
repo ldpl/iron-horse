@@ -14,22 +14,21 @@
       depends on https://github.com/OpenTTD/OpenTTD/pull/7000 adn refactoring power_by_railtype approach -->
 <tal:railtype_varies_power condition="consist.engine_varies_power_by_railtype(vehicle)">
     // -- power varies by railtype -- //
-    switch (FEAT_TRAINS, SELF, ${vehicle.id}_switch_power, current_railtype) {
+    <!--!switch (FEAT_TRAINS, SELF, ${vehicle.id}_switch_power, current_railtype) {
         <tal:only_if_overrides_exist condition="consist.power_by_railtype is not None">
             <tal:railtype_specific_effects repeat="railtype consist.power_by_railtype.keys()">
                 ${railtype}: return ${consist.power_by_railtype[railtype]};
             </tal:railtype_specific_effects>
         </tal:only_if_overrides_exist>
         return ${consist.power};
-    }
-    <!--! only useful if this is merged: https://github.com/OpenTTD/OpenTTD/pull/7000 -->
+    }-->
+    <!--! only useful if this is merged: https://github.com/OpenTTD/OpenTTD/pull/8554 -->
     <!--! Pantograph visibility switches would also need updated equivalently (search vehicle templates) -->
     <!--! Create effect switches would also need updated equivalently (search vehicle templates) -->
-    <!--!switch (FEAT_TRAINS, SELF, ${vehicle.id}_switch_power, var[0x6a, 8, 0xFF, ELRL]) {
-        1: return 2000; // unfinished eh
+    switch (FEAT_TRAINS, SELF, ${vehicle.id}_switch_power, var[0x63, 2, 1, ELRL]) {
+        1: return 9000; // unfinished eh
         return ${consist.power};
-    }-->
-    <!--! end variable power -->
+    }
 </tal:railtype_varies_power>
 
 <tal:wagons_add_power condition="consist.wagons_add_power">
