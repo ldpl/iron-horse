@@ -50,10 +50,21 @@
         }
     </tal:block
     <tal:block case="False">
-        switch (FEAT_TRAINS, PARENT, ${vehicle.id}_switch_running_cost_factor, var[0x4E, 0, 0xFFFFFFF]) {
-            0..10: return ${consist.running_cost};
-            return ${4 * consist.running_cost};
-        }
+        <tal:foo condition="getattr(consist, 'fuck_with_costs', False)">
+            switch (FEAT_TRAINS, PARENT, ${vehicle.id}_switch_because_i_fail_at_logic, [current_date - var[0x4E, 0, 0xFFFFFFF]]) {
+                0..5: return ${consist.running_cost};
+                return ${20 * consist.running_cost};
+            }
+            switch (FEAT_TRAINS, PARENT, ${vehicle.id}_switch_running_cost_factor, current_speed > 0) {
+                0: ${consist.running_cost};
+                return ${vehicle.id}_switch_because_i_fail_at_logic;
+            }
+        </tal:foo>
+        <tal:foo condition="getattr(consist, 'fuck_with_costs', False) == False">
+            switch (FEAT_TRAINS, PARENT, ${vehicle.id}_switch_running_cost_factor, 1) {
+                return ${consist.running_cost};
+            }
+        </tal:foo>
     </tal:block>
 </tal:running_cost_factor>
 
