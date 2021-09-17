@@ -230,6 +230,38 @@ grain_hopper_car_livery_recolour_maps = (("DFLT", body_recolour_CC1),)
 
 livestock_livery_recolour_maps = (("DFLT", body_recolour_CC2),)
 
+merchandise_box_car_livery_recolour_maps = (
+    (
+        "DFLT",
+        {
+            136: 72,
+            137: 73,
+            138: 74,
+            139: 75,
+            140: 76,
+            141: 77,
+            142: 78,
+            143: 79,
+            40: 71,
+            41: 72,
+            42: 73,
+            43: 74,
+            44: 75,
+            45: 77,
+            46: 78,
+            47: 79,
+            CC2: 71,
+            CC2 + 1: 72,
+            CC2 + 2: 73,
+            CC2 + 3: 74,
+            CC2 + 4: 75,
+            CC2 + 5: 77,
+            CC2 + 6: 78,
+            CC2 + 7: 79,
+        },
+    ),
+)
+
 oil_tank_car_livery_recolour_maps = (
     ("DFLT", {136: 1, 137: 2, 138: 3, 139: 4, 140: 5, 141: 6, 142: 7, 143: 8}),
 )

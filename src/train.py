@@ -1853,13 +1853,12 @@ class BolsterCarConsist(CarConsist):
         self.gestalt_graphics = GestaltGraphicsVisibleCargo(piece="long_products")
 
 
-class BoxCarConsist(CarConsist):
+class BoxCarConsistBase(CarConsist):
     """
     Box car, van - express, piece goods cargos, other selected cargos.
     """
 
     def __init__(self, **kwargs):
-        self.base_id = "box_car"
         super().__init__(**kwargs)
         self.class_refit_groups = ["packaged_freight"]
         self.label_refits_allowed = polar_fox.constants.allowed_refits_by_label[
@@ -1870,15 +1869,44 @@ class BoxCarConsist(CarConsist):
         ]
         self.default_cargos = polar_fox.constants.default_cargos["box"]
         self.buy_cost_adjustment_factor = 1.2
-        self._intro_date_days_offset = (
-            global_constants.intro_date_offsets_by_role_group["freight_core"]
-        )
         # allow flipping, used to flip company colour
         self.allow_flip = True
         # Graphics configuration
         self.roof_type = "freight"
+
+
+class BoxCarConsist(BoxCarConsistBase):
+    """
+    Company-coloured box car, van - express, piece goods cargos, other selected cargos.
+    """
+
+    def __init__(self, **kwargs):
+        self.base_id = "box_car"
+        super().__init__(**kwargs)
+        self._intro_date_days_offset = (
+            global_constants.intro_date_offsets_by_role_group["freight_core"]
+        )
+        # Graphics configuration
         self.gestalt_graphics = GestaltGraphicsBoxCarOpeningDoors(
             id_base="box_car", recolour_maps=graphics_constants.box_livery_recolour_maps
+        )
+
+
+class BoxCarMerchandiseConsist(BoxCarConsistBase):
+    """
+    Brown-coloured box car, van - express, piece goods cargos, other selected cargos.
+    """
+
+    def __init__(self, **kwargs):
+        self.base_id = "merchandise_box_car"
+        super().__init__(**kwargs)
+        self._intro_date_days_offset = (
+            global_constants.intro_date_offsets_by_role_group["non_core_wagons"]
+        )
+        self._joker = True
+        # Graphics configuration
+        self.gestalt_graphics = GestaltGraphicsBoxCarOpeningDoors(
+            id_base="box_car", recolour_maps=graphics_constants.merchandise_box_car_livery_recolour_maps
         )
 
 
