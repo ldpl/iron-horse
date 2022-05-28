@@ -118,6 +118,7 @@ class GestaltGraphicsRandomisedWagon(GestaltGraphics):
                 "generate_buy_menu_spritesheet_from_randomisation_candidates",
             ]
         )
+        self.overlay_image_id = kwargs.get("overlay_image_id", 1)
         # randomised buy menu sprites depend on generated vehicle spritesheet, so defer processing to round 2
         self.processing_priority = 2
 

@@ -529,8 +529,9 @@ class GenerateBuyMenuSpritesheetFromRandomisationCandidatesPipeline(Pipeline):
 
         overlay_image_width = 16
         overlay_image_height = 16
+        overlay_image_filename = "randomised_wagon_overlay_" + str(self.consist.gestalt_graphics.overlay_image_id) + ".png"
         overlay_image = Image.open(
-            os.path.join(currentdir, "src", "graphics", "randomised_wagon_overlay.png")
+            os.path.join(currentdir, "src", "graphics", overlay_image_filename)
         ).crop((10, 10, 10 + overlay_image_width, 10 + overlay_image_height))
         # create a mask so that we paste only the overlay pixels (no blue pixels)
         overlay_mask = overlay_image.copy()
