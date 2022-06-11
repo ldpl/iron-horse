@@ -1557,21 +1557,20 @@ class Train(object):
         png = grf.ImageFile(Path(global_constants.graphics_path) / f'{self.consist.id}.png')
         make_sprite = lambda *args, **kw: grf.FileSprite(png, *args, **kw)
 
-        sprites = []
+        sprites = grf.VehicleSpriteTable(grf.TRAIN)
         variant_switches = []
         livery = self.consist.gestalt_graphics.all_liveries[0]
         livery_index = 0
 
         for reversed_variant in self.consist.reversed_variants:
             for flipped in (False, True):
-                set_id = len(sprites)
-                sprites.append(tmpl_vehicle(
+                row_id = sprites.add_row(tmpl_vehicle(
                     reversed_variant,
                     flipped,
                     10 + (livery_index * 30) + self.spriterow_num * len(self.consist.gestalt_graphics.all_liveries) * 30,
                     make_sprite,
                 ))
-                layout = grf.GenericSpriteLayout(ent1=(set_id,), ent2=(set_id,))
+                layout = sprites.get_layout(row_id)
                 if flipped:
                     ranges = {1: layout}
                 else:
@@ -1599,7 +1598,7 @@ class Train(object):
 
         def tmpl_vehicle_purchase(func):
             # TODO dual-head
-            sprite = func(
+            return func(
                 self.consist.buy_menu_x_loc,
                 10 + livery_index * 30,
                 1 + self.consist.buy_menu_width,
@@ -1607,24 +1606,13 @@ class Train(object):
                 xofs=-1 * int(self.consist.buy_menu_width / 2),
                 yofs=-11
             )
-            return [grf.EMPTY_SPRITE] * 6 + [sprite, grf.EMPTY_SPRITE]
             # TODO cc2, pantograph
 
-        purchase_graphics = grf.GenericSpriteLayout(ent1=(len(sprites),), ent2=(len(sprites),))
-        sprites.append(tmpl_vehicle_purchase(make_sprite))
+        row_id = sprites.add_purchase_graphics(tmpl_vehicle_purchase(make_sprite))
+        purchase_graphics = sprites.get_layout(row_id)
 
-        # Write all the sprites
-
-        res.append(grf.Action1(
-            feature=grf.TRAIN,
-            set_count=len(sprites),
-            sprite_count=8,
-        ))
-
-        for l in sprites:
-            res.extend(l)
-
-        # Final Action3
+        # Final touches
+        res.append(sprites)
 
         default, maps = callbacks.make_switch(graphics_switch, purchase_graphics)
         res.append(grf.Action3(
