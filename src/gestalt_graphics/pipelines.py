@@ -17,7 +17,7 @@ import polar_fox.pixa as pixa
 from polar_fox.pixa import Spritesheet, PieceCargoSprites
 from gestalt_graphics import graphics_constants
 
-DOS_PALETTE = Image.open("palette_key.png").palette
+from grf import PALETTE as DOS_PALETTE
 
 """
 Pipelines can be dedicated to a single task such as SimpleRecolourPipeline

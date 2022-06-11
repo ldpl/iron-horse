@@ -24,8 +24,8 @@ Any changes made here are liable to be over-written.
 
 import os
 from PIL import Image, ImageDraw, ImageFont
-
-DOS_PALETTE = Image.open("palette_key.png").palette
+from grf import PALETTE as DOS_PALETTE
+# DOS_PALETTE = Image.open("palette_key.png").palette
 try:
     # truetype fonts may not be available in older versions of PIL / Pillow
     label_font = ImageFont.truetype(os.path.join("font", "slkscr.ttf"), 8)
