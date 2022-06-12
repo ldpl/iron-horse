@@ -1985,12 +1985,7 @@ DefineMultiple(
 )
 
 # Disable default trains
-DefineMultiple(
-    feature=grf.TRAIN,
-    first_id=0,
-    count=116,
-    props={'climates_available': [grf.NO_CLIMATE] * 116}
-)
+g.add(grf.DisableDefault(grf.TRAIN, range(116)))
 
 make_roster()
 g.add(make_lamia("pony"))
