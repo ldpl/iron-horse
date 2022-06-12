@@ -3,7 +3,7 @@ from pathlib import Path
 
 import grf
 from grf import TRAIN, RV, SHIP, AIRCRAFT, STATION, CANAL, BRIDGE, HOUSE, GLOBAL_VAR, INDUSTRY_TILE, INDUSTRY, CARGO, SOUND_EFFECT, AIRPORT, SIGNAL, OBJECT, RAILTYPE, AIRPORT_TILE, ROADTYPE, TRAMTYPE
-from grf import Ref, CB, ImageFile, FileSprite, RAWSound
+from grf import Ref, CB, ImageFile, FileSprite, RAWSound, TrainFlags
 
 # ---------- horse guts -----------
 
@@ -1183,7 +1183,7 @@ class Train(object):
         return self._symmetry_type
 
     @property
-    def special_flags(self):
+    def nml_special_flags(self):
         special_flags = ["TRAIN_FLAG_2CC", "TRAIN_FLAG_SPRITE_STACK"]
         if self.consist.allow_flip:
             special_flags.append("TRAIN_FLAG_FLIP")
@@ -1196,7 +1196,20 @@ class Train(object):
         return ",".join(special_flags)
 
     @property
-    def refittable_classes(self):
+    def grfpy_special_flags(self):
+        special_flags = TrainFlags.USE_2CC | TrainFlags.USE_SPRITE_STACK
+        if self.consist.allow_flip:
+            special_flags |= TrainFlags.ALLOW_FLIPPING
+        if self.autorefit:
+            special_flags |= TrainFlags.AUTOREFIT
+        if self.consist.tilt_bonus:
+            special_flags |= TrainFlags.TILT
+        if self.consist.train_flag_mu:
+            special_flags |= TrainFlags.MULTIPLE_UNIT
+        return special_flags
+
+    @property
+    def nml_refittable_classes(self):
         cargo_classes = []
         # maps lists of allowed classes.  No equivalent for disallowed classes, that's overly restrictive and damages the viability of class-based refitting
         if hasattr(self, "articulated_unit_different_class_refit_groups"):
@@ -1211,6 +1224,26 @@ class Train(object):
                 for cargo_class in global_constants.base_refits_by_class[i]
             ]
         return ",".join(set(cargo_classes))  # use set() here to dedupe
+
+    @property
+    def grfpy_refittable_classes(self):
+        cargo_classes = []
+        # maps lists of allowed classes.  No equivalent for disallowed classes, that's overly restrictive and damages the viability of class-based refitting
+        if hasattr(self, "articulated_unit_different_class_refit_groups"):
+            # in *rare* cases an articulated unit might need different refit classes to its parent consist
+            class_refit_groups = self.articulated_unit_different_class_refit_groups
+        else:
+            # by default get the refit classes from the consist
+            class_refit_groups = self.consist.class_refit_groups
+        for i in class_refit_groups:
+            [
+                cargo_classes.append(cargo_class)
+                for cargo_class in global_constants.base_refits_by_class[i]
+            ]
+        res = grf.CargoClass.NONE
+        for x in set(cargo_classes):  # use set() here to dedupe
+            res |= getattr(grf.CargoClass, x)
+        return res
 
     @property
     def loading_speed(self):
@@ -1390,11 +1423,11 @@ class Train(object):
         args = ",".join([str(y), anim_flag])
         return template_name + "(" + args + ")"
 
-    def get_label_refits_allowed(self):
+    def nml_get_label_refits_allowed(self):
         # allowed labels, for fine-grained control in addition to classes
         return ",".join(self.label_refits_allowed)
 
-    def get_label_refits_disallowed(self):
+    def nml_get_label_refits_disallowed(self):
         # disallowed labels, for fine-grained control, knocking out cargos that are allowed by classes, but don't fit for gameplay reasons
         return ",".join(self.label_refits_disallowed)
 
@@ -1498,6 +1531,7 @@ class Train(object):
         if callbacks.get_flags():
             extra_props['cb_flags'] = callbacks.get_flags()
 
+
         res.append(grf.Define(
             feature=grf.TRAIN,
             id=self.numeric_id,
@@ -1507,21 +1541,21 @@ class Train(object):
                 'introduction_date': date(self.consist.intro_date, 1 + self.consist.intro_date_days_offset, 1),
                 'cargo_capacity': self.default_cargo_capacity,
                 'sprite_id': 0xfd,  # magic value for newgrf sprites
-                'power': self.consist.power,  # TODO hp
-                'weight': self.consist.weight,  # TODO ton
-                'tractive_effort_coefficient': int(self.consist.tractive_effort_coefficient * 256),
+                'power': grf.train_hpi(self.consist.power),
+                'weight': grf.train_ton(self.consist.weight),
+                'tractive_effort_coefficient': grf.nml_te(self.consist.tractive_effort_coefficient),
                 'cost_factor': 0,  # use the CB to set this, the prop is capped to max 255, cb is 32k
                 'running_cost_base': getattr(grf.Train.EngineClass, self.running_cost_base[13:]),
                 'running_cost_factor': 0,  # use the CB to set this, the prop is capped to max 255, cb is 32k
                 'refit_cost': 0,  # btw this needs to be 0 if we want autorefit without using cb
-                # TODO 'refittable_cargo_classes': bitmask(vehicle.refittable_classes),
-                'non_refittable_cargo_classes': 0,  # don't set non-refittable classes, increases likelihood of breaking cargo support
+                'refittable_cargo_classes': self.grfpy_refittable_classes,
+                'non_refittable_cargo_classes': grf.CargoClass.NONE,  # don't set non-refittable classes, increases likelihood of breaking cargo support
                 # TODO
-                # 'cargo_allow_refit': self.get_label_refits_allowed().split(','),
-                # 'cargo_disallow_refit': self.get_label_refits_disallowed().split(','),
+                'cargo_allow_refit': g.map_cargo_labels(self.label_refits_allowed),
+                'cargo_disallow_refit': g.map_cargo_labels(self.label_refits_disallowed),
                 'cargo_allow_refit': b'',
                 'cargo_disallow_refit': b'',
-                # TODO 'misc_flags':                     bitmask(${vehicle.special_flags}); // nml constants
+                'misc_flags': self.grfpy_special_flags,
                 'model_life': self.consist.model_life,
                 'retire_early': self.consist.retire_early,
                 'reliability_decay': 20,  # default value
@@ -1969,6 +2003,7 @@ DefineStrings, Switch, RandomSwitch, ReplaceOldSprites, SetDescription, Action1,
 #     refittable_cargo_types=1,
 # )
 
+g.set_cargo_table(global_constants.cargo_labels)
 
 DefineMultiple(
     feature=grf.GLOBAL_VAR,
