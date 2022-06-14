@@ -213,7 +213,7 @@ class Consist(grf.SpriteGenerator):
         return result
 
     @property
-    def name(self):
+    def nml_name(self):
         if self.str_name_suffix is not None:
             return (
                 "string(STR_NAME_CONSIST_PARENTHESES, string(STR_NAME_"
@@ -224,6 +224,12 @@ class Consist(grf.SpriteGenerator):
             )
         else:
             return "string(STR_NAME_" + self.id + ")"
+
+    def grfpy_get_name(self, g):
+        if self.str_name_suffix is not None:
+            return g.strings['NAME_CONSIST_PARENTHESES'].eval(self._name, g.strings['NAME_SUFFIX_DIESEL'])
+        else:
+            return g.strings(self._name)
 
     def engine_varies_power_by_railtype(self, vehicle):
         if self.power_by_railtype is not None and vehicle.is_lead_unit_of_consist:
@@ -759,6 +765,13 @@ class Consist(grf.SpriteGenerator):
         raise Exception("no role string found for ", self.id)
 
     @property
+    def grfpy_buy_menu_role_string(self):
+        for role_group, roles in global_constants.role_group_mapping.items():
+            if self.role in roles:
+                return global_constants.role_string_mapping[role_group]
+        raise Exception("no role string found for ", self.id)
+
+    @property
     def cite(self):
         # this assumes that NG and Metro always return the same, irrespective of consist cite
         # that makes sense for Pony roster, but might not work in other rosters, deal with that if it comes up eh?
@@ -1038,6 +1051,56 @@ class EngineConsist(Consist):
         # jokers are bonus vehicles (mostly) engines which don't fit strict tech tree progression
         # for engines, jokers use -ve value for role_child_branch_num, tech tree vehicles use +ve
         return self.role_child_branch_num < 0
+
+    def grfpy_get_buy_menu_text_switch(self, g, vehicle):
+        # keep the template logic simple, present strings for a switch/case tree
+        # variable_power and wagons_add_power are mutually exclusive (asserted by engine_varies_power_by_railtype as of August 2019)
+        code = ''
+        result = []
+        if self.engine_varies_power_by_railtype(vehicle):
+            #     STORE_TEMP(${consist.power_by_railtype['RAIL']} | (${consist.power_by_railtype['ELRL']} << 16), 0x100)
+            result.append(g.strings['POWER_BY_RAILTYPE'])
+            code = f'TEMP[0x100] = {self.power_by_railtype["RAIL"] | (self.power_by_railtype["ELRL"] << 16)}\n'
+        elif self.lgv_capable:
+            result.append(g.strings['STR_SPEED_BY_RAILTYPE_LGV_CAPABLE'])
+            # yeah, simplicity failed when lgv_capable was added, this simple tree needs rethought to allow better composition of arbitrary strings
+            code = f'TEMP[0x100] = {int(1.60934 * self.speed_on_lgv) | (int(1.60934 * self.speed) << 16)}\n'
+            if self.buy_menu_hint_wagons_add_power:
+                result.append(self.buy_menu_distributed_power_substring)
+                parts += 1
+                str_id = g.strings(self._name).get_global_id()
+                code += f'TEMP[0x101] = {self.buy_menu_distributed_power_hp_value | (str_id << 16)}\n'
+
+        # engines will always show a role string
+        # !! this try/except is all wrong, I just want to JFDI to add buy menu strings to wagons which previously didn't support them, and can do regret later
+        # !! this may not be used / or required as of April 2021 - _buy_menu_role_string is available instead
+        try:
+            result.append(g.strings['ROLE'].eval(g.strings[self.grfpy_buy_menu_role_string[4:]]))
+        except:
+            pass
+
+        # some wagons (mostly railcar trailers and pax coaches) might want to show an optional role string
+        if self._buy_menu_role_string is not None:
+            result.append(g.strings['ROLE'].eval(g.strings[self._buy_menu_role_string[4:]]))
+
+        # driving cab hint comes after role string
+        if self.buy_menu_hint_driving_cab:
+            result.append(g.strings['BUY_MENU_HINT_DRIVING_CAB'])
+
+        # driving cab hint comes after role string
+        if self.buy_menu_hint_restaurant_car:
+            result.append(g.strings['STR_BUY_MENU_HINT_RESTAURANT_CAR'])
+
+        joiner = '{}'.join('{STRING}' for i in range(len(result)))
+        string = g.strings.add(joiner).eval(*result)
+        if not code:
+            return string.get_global_id()
+
+        return grf.Switch(
+            ranges={},
+            default=string.get_global_id(),
+            code=code,
+        )
 
 
 class Train(object):
@@ -1490,8 +1553,7 @@ class Train(object):
 
         if self.is_lead_unit_of_consist and (self.consist.power > 0 or self.consist.buy_menu_hint_wagons_add_power) \
                 or self.consist._buy_menu_role_string is not None:
-            pass
-            # TODO callbacks.purchase_text = g.add_string(self.additional_text)
+            callbacks.purchase_text = self.consist.grfpy_get_buy_menu_text_switch(g, self)
 
         if self.is_lead_unit_of_consist and len(self.consist.units) > 1:
             callbacks.articulated_part = grf.Switch(
@@ -1509,14 +1571,8 @@ class Train(object):
 
         # Train name
 
-        res = [
-            grf.DefineStrings(
-                feature=grf.TRAIN,
-                offset=self.numeric_id,
-                is_generic_offset=False,
-                strings=[self.consist.name]
-            ),
-        ]
+        res = []
+        res.extend(self.consist.grfpy_get_name(g).get_actions(grf.TRAIN, self.numeric_id))
 
         # Define train
 
@@ -1550,7 +1606,6 @@ class Train(object):
                 'refit_cost': 0,  # btw this needs to be 0 if we want autorefit without using cb
                 'refittable_cargo_classes': self.grfpy_refittable_classes,
                 'non_refittable_cargo_classes': grf.CargoClass.NONE,  # don't set non-refittable classes, increases likelihood of breaking cargo support
-                # TODO
                 'cargo_allow_refit': g.map_cargo_labels(self.label_refits_allowed),
                 'cargo_disallow_refit': g.map_cargo_labels(self.label_refits_disallowed),
                 'cargo_allow_refit': b'',
@@ -1944,15 +1999,20 @@ def make_lamia(roster_id):
 
 #  -----------   new code ------------
 
+from polar_fox import git_info
+
 g = grf.NewGRF(
     grfid=b'CA\xff\xff',
-    name='Iron Horsenstein',
-    description='License: \x89GPL v2\r\x98',
+    name=f'Iron Horsenstein {git_info.get_version()}',
+    description='License: {SILVER}GPL v2{}{BLACK}',
 )
 
 # Bind all the used classes to current grf so they can be used declaratively
 DefineStrings, Switch, RandomSwitch, ReplaceOldSprites, SetDescription, Action1, If, DefineMultiple, SpriteSet, ModifySprites, ComputeParameters, Action3, SetProperties, Define, GenericSpriteLayout = g.bind(grf.DefineStrings), g.bind(grf.Switch), g.bind(grf.RandomSwitch), g.bind(grf.ReplaceOldSprites), g.bind(grf.SetDescription), g.bind(grf.Action1), g.bind(grf.If), g.bind(grf.DefineMultiple), g.bind(grf.SpriteSet), g.bind(grf.ModifySprites), g.bind(grf.ComputeParameters), g.bind(grf.Action3), g.bind(grf.SetProperties), g.bind(grf.Define), g.bind(grf.GenericSpriteLayout)
 
+g.strings.import_lang_dir('src/lang', 'english.lng')
+
+g.strings.add('{STRING} ({STRING})', 'NAME_CONSIST_PARENTHESES')
 # Train = g.bind(grf.Train)
 
 # def tmpl_rv(x, y, func):
@@ -2005,22 +2065,18 @@ DefineStrings, Switch, RandomSwitch, ReplaceOldSprites, SetDescription, Action1,
 
 g.set_cargo_table(global_constants.cargo_labels)
 
-DefineMultiple(
-    feature=grf.GLOBAL_VAR,
-    first_id=15,
-    count=2,
-    props={'basecost': [6, 9]}
-)
-
-DefineMultiple(
-    feature=grf.GLOBAL_VAR,
-    first_id=42,
-    count=2,
-    props={'basecost': [6, 4]}
-)
+g.add(grf.BaseCosts({
+    grf.BaseCosts.BUILD_VEHICLE_TRAIN: global_constants.PR_BUILD_VEHICLE_TRAIN + 8,
+    grf.BaseCosts.BUILD_VEHICLE_WAGON: global_constants.PR_BUILD_VEHICLE_WAGON + 8,
+    grf.BaseCosts.RUNNING_TRAIN_STEAM: global_constants.PR_RUNNING_TRAIN_STEAM + 8,
+    grf.BaseCosts.RUNNING_TRAIN_DIESEL: global_constants.PR_RUNNING_TRAIN_DIESEL + 8,
+    # electric running cost not used, don't define base cost multiplier
+}))
 
 # Disable default trains
 g.add(grf.DisableDefault(grf.TRAIN, range(116)))
+
+# TODO sort order
 
 make_roster()
 g.add(make_lamia("pony"))
