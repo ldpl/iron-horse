@@ -1062,7 +1062,7 @@ class EngineConsist(Consist):
             result.append(g.strings['POWER_BY_RAILTYPE'])
             code = f'TEMP[0x100] = {self.power_by_railtype["RAIL"] | (self.power_by_railtype["ELRL"] << 16)}\n'
         elif self.lgv_capable:
-            result.append(g.strings['STR_SPEED_BY_RAILTYPE_LGV_CAPABLE'])
+            result.append(g.strings['SPEED_BY_RAILTYPE_LGV_CAPABLE'])
             # yeah, simplicity failed when lgv_capable was added, this simple tree needs rethought to allow better composition of arbitrary strings
             code = f'TEMP[0x100] = {int(1.60934 * self.speed_on_lgv) | (int(1.60934 * self.speed) << 16)}\n'
             if self.buy_menu_hint_wagons_add_power:
@@ -1089,7 +1089,7 @@ class EngineConsist(Consist):
 
         # driving cab hint comes after role string
         if self.buy_menu_hint_restaurant_car:
-            result.append(g.strings['STR_BUY_MENU_HINT_RESTAURANT_CAR'])
+            result.append(g.strings['BUY_MENU_HINT_RESTAURANT_CAR'])
 
         joiner = '{}'.join('{STRING}' for i in range(len(result)))
         string = g.strings.add(joiner).eval(*result)
