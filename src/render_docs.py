@@ -427,7 +427,7 @@ class DocHelper(object):
         return result
 
     def unpack_name_string(self, consist):
-        substrings = consist.name.split("string(")
+        substrings = consist.nml_name.split("string(")
         # engines have an untranslated name defined via _name, wagons use a translated string
         if consist._name is not None:
             name = consist._name
@@ -480,6 +480,7 @@ class DocHelper(object):
         props_to_print = {}
         for vehicle in subclass["vehicles"]:
             result = {"vehicle": {}, "subclass_props": []}
+            print ('NAME', self.unpack_name_string(vehicle))
             result = self.fetch_prop(
                 result, "Vehicle Name", self.unpack_name_string(vehicle)
             )
