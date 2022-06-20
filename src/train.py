@@ -4860,7 +4860,7 @@ class Train(object):
 
         if self.is_lead_unit_of_consist and len(self.consist.units) > 1:
             callbacks.articulated_part = grf.Switch(
-                ranges={i + 1: unit.id for i, unit in enumerate(self.consist.units)},
+                ranges={i + 1: unit.numeric_id for i, unit in enumerate(self.consist.units)},
                 default=0x7fff,
                 code='extra_callback_info1_byte',
             )

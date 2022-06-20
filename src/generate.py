@@ -8,6 +8,7 @@ from polar_fox import git_info
 import iron_horse
 import global_constants
 
+
 def main():
     start = time.time()
     iron_horse.main()
