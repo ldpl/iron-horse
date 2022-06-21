@@ -239,7 +239,7 @@ class Consist(grf.SpriteGenerator):
 
     def grfpy_get_name(self, g):
         if self.str_name_suffix is not None:
-            return g.strings['NAME_CONSIST_PARENTHESES'].eval(self._name, g.strings['NAME_SUFFIX_DIESEL'])
+            return g.strings['NAME_CONSIST_PARENTHESES'].eval(self._name, g.strings[self.str_name_suffix[4:]])
         else:
             return g.strings(self._name)
 
@@ -1055,7 +1055,7 @@ class EngineConsist(Consist):
             # yeah, simplicity failed when lgv_capable was added, this simple tree needs rethought to allow better composition of arbitrary strings
             code = f'TEMP[0x100] = {int(1.60934 * self.speed_on_lgv) | (int(1.60934 * self.speed) << 16)}\n'
             if self.buy_menu_hint_wagons_add_power:
-                result.append(self.buy_menu_distributed_power_substring)
+                result.append(g.strings[self.buy_menu_distributed_power_substring[4:]])
                 str_id = g.strings(self._name).get_global_id()
                 code += f'TEMP[0x101] = {self.buy_menu_distributed_power_hp_value | (str_id << 16)}\n'
 
@@ -1084,10 +1084,11 @@ class EngineConsist(Consist):
         if not code:
             return string.get_global_id()
 
+        str_id = string.get_global_id()
         return grf.Switch(
             ranges={},
-            default=string.get_global_id(),
-            code=code,
+            default=str_id,
+            code=code + f'{str_id}\n',
         )
 
 
@@ -4990,12 +4991,16 @@ class Train(object):
         # Purchase graphics
 
         def tmpl_vehicle_purchase(func, second_head=False):
+            if self.consist.dual_headed:
+                xofs = 1 if second_head else -2
+            else:
+                xofs = 0
             return func(
                 104 if second_head else self.consist.buy_menu_x_loc,
                 10 + livery_index * 30,
                 1 + self.consist.buy_menu_width,
                 16,
-                xofs= (1 if second_head else -2) - int(self.consist.buy_menu_width / 2),
+                xofs=xofs - int(self.consist.buy_menu_width / 2),
                 yofs=-11
             )
             # TODO cc2, pantograph
