@@ -4839,6 +4839,7 @@ class Train(object):
     def get_sprites(self, g):
         # TODO
         if self.consist.gestalt_graphics.nml_template != "vehicle_engine.pynml":
+            print(f'Skip {self.id} due to unimplemented template {self.consist.gestalt_graphics.nml_template}')
             return []
         # integrity tests
         self.assert_cargo_labels(self.label_refits_allowed)
@@ -4860,7 +4861,7 @@ class Train(object):
 
         if self.is_lead_unit_of_consist and len(self.consist.units) > 1:
             callbacks.articulated_part = grf.Switch(
-                ranges={i + 1: unit.numeric_id for i, unit in enumerate(self.consist.units)},
+                ranges={i + 1: unit.numeric_id for i, unit in enumerate(self.consist.units[1:])},
                 default=0x7fff,
                 code='extra_callback_info1_byte',
             )
