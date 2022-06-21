@@ -4989,19 +4989,19 @@ class Train(object):
 
         # Purchase graphics
 
-        def tmpl_vehicle_purchase(func):
-            # TODO dual-head
+        def tmpl_vehicle_purchase(func, second_head=False):
             return func(
-                self.consist.buy_menu_x_loc,
+                104 if second_head else self.consist.buy_menu_x_loc,
                 10 + livery_index * 30,
                 1 + self.consist.buy_menu_width,
                 16,
-                xofs=-1 * int(self.consist.buy_menu_width / 2),
+                xofs= (1 if second_head else -2) - int(self.consist.buy_menu_width / 2),
                 yofs=-11
             )
             # TODO cc2, pantograph
 
-        row_id = sprites.add_purchase_graphics(tmpl_vehicle_purchase(make_sprite))
+        second_head = tmpl_vehicle_purchase(make_sprite, True) if self.consist.dual_headed else None
+        row_id = sprites.add_purchase_graphics(tmpl_vehicle_purchase(make_sprite), second_head)
         purchase_graphics = sprites.get_layout(row_id)
 
         # Final touches
